@@ -15,10 +15,9 @@ def main():
 
     return cursor
 
-def adj_query(cursor):
-    # cursor.execute(f'SELECT * FROM AR_ADJ_HIST WHERE DOC_DAT >={dates[0]} AND DOC_DAT <={dates[1]}') 
-   
-    cursor.execute("SELECT * FROM AR_ADJ_HIST")#get information from sql table
+def adj_query(cursor):   
+    cursor.execute("SELECT a.*, c.NAM FROM AR_ADJ_HIST a JOIN AR_CUST c ON a.CUST_NO=c.CUST_NO")#get information from sql table
+    # make a join statetment and join the customer no.s to customer names, and just select the customer names 
 
     col=[]
     data=[]# instantiating variables
@@ -28,11 +27,33 @@ def adj_query(cursor):
     for row in rows: 
         data.append(list(row))
     
-    for row in cursor.columns(table='AR_ADJ_HIST'):
-        col.append(row.column_name)
+    col = [column[0] for column in cursor.description]
+
 
     df_adj_hist=pd.DataFrame(data,columns=col)
 
+    #formatting data 
+
+    #drop event_no row
+    cols_to_drop=[
+        'EVENT_NO',
+        'DOC_TYP',
+        'BAT_ID',
+        'ENTRY_SEQ_NO',
+        'APPLY_TO_METH',
+        'APPLY_TO_DOC_TYP',
+        'DISC_DAT',
+        'SLS_REP',
+        'CUST_BAL_BEFORE',
+        'LST_MAINT_DT',
+        'LST_MAINT_USR_ID',
+        'LST_LCK_DT',
+        'ROW_TS',
+        'CUST_STR_ID',
+        'STR_ID'
+    ]
+
+    df_adj_hist=df_adj_hist.drop(cols_to_drop,axis=1)
     return df_adj_hist
 
 if __name__=='__main__':
