@@ -16,7 +16,7 @@ def main():
     return cursor
 
 def adj_query(cursor):   
-    cursor.execute("SELECT a.*, c.NAM FROM AR_ADJ_HIST a JOIN AR_CUST c ON a.CUST_NO=c.CUST_NO")#get information from sql table
+    cursor.execute("SELECT c.NAM , a.* FROM AR_ADJ_HIST a JOIN AR_CUST c ON a.CUST_NO=c.CUST_NO")#get information from sql table
     # make a join statetment and join the customer no.s to customer names, and just select the customer names 
 
     col=[]
@@ -51,7 +51,7 @@ def adj_query(cursor):
         'ROW_TS',
         'CUST_STR_ID',
         'STR_ID'
-    ]
+    ]#a bit unnesscessary will modify to select only columns needed 
 
     df_adj_hist=df_adj_hist.drop(cols_to_drop,axis=1)
     return df_adj_hist
