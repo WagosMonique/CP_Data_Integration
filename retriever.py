@@ -1,7 +1,7 @@
 import pyodbc
 import pandas as pd
 
-# def connection():
+# def connection(server):#this function performs the connection on a given server and returns a cursor.
 def main():
 
     cnxn= pyodbc.connect("Driver={SQL Server Native Client 11.0};" 
@@ -9,6 +9,7 @@ def main():
                         "Database=TestGolf;"
                         "uid=sa;pwd=CounterPoint8")
 
+    #the below is just for testing purposes and will be edited to integrate with the file integration
     cursor=cnxn.cursor()
     ar_df=adj_query(cursor)
     ar_df.to_excel("export\\ar_data.xlsx")
@@ -18,6 +19,10 @@ def main():
 
     tkt_lines_df=tkt_lines(cursor)
     tkt_lines_df.to_excel("export\\tkt_lines_data.xlsx")
+
+    odoo_quotes=quote_import(cursor)
+    odoo_quotes.to_excel("export\\quotes_data.xlsx")
+
 
     return cursor
 
@@ -69,7 +74,7 @@ def tkt_hist(cursor):
     data=[]# instantiating variables
 
     
-    cursor.execute("SELECT * FROM PS_TKT_HIST")
+    cursor.execute("SELECT BUS_DAT,DOC_ID,TKT_NO,TKT_DT,TKT_TYP,CUST_NO,LINS,SUB_TOT,TOT_EXT_COST,TOT FROM PS_TKT_HIST")
 
     rows=cursor.fetchall()#getting all rows from table
 
@@ -104,6 +109,62 @@ def tkt_lines(cursor):
 
     return df_tkt_hist_lines
 
+
+def quote_import(cursor):
+    #merge data from ticket and lines
+
+    col=[]
+    data=[]
+
+    cursor.execute("""SELECT a.BUS_DAT,a.DOC_ID,a.TKT_NO,a.TKT_DT,a.TKT_TYP,a.CUST_NO,a.LINS,a.SUB_TOT,a.TOT_EXT_COST,a.TOT,
+                   b.ITEM_NO,b.QTY_SOLD,b.PRC_1,b.CALC_PRC,b.REG_PRC,b.PRC,b.EXT_COST,b.EXT_PRC,b.UNIT_RETL_VAL,b.GROSS_EXT_PRC,b.CALC_EXT_PRC 
+                   FROM PS_TKT_HIST a 
+                   JOIN PS_TKT_HIST_LIN b
+                   ON a.TKT_NO=b.TKT_NO
+                """)
+    
+    rows=cursor.fetchall()#getting all rows from table
+   
+    for row in rows: 
+        data.append(list(row))
+
+    
+    col = [column[0] for column in cursor.description]
+
+
+    df_tkt_data=pd.DataFrame(data,columns=col)
+    quote_data=pd.DataFrame(columns=['Order Reference','Customer*','Order Date','Expiration','Order Lines/Products*','Order Lines/Quantity','Order Lines/Unit Price'])
+    
+    indicator=0
+    for row in  df_tkt_data.itertuples(index=False):
+        if indicator==0:
+            if(row.LINS!=0):
+                indicator=int(row.LINS)
+                #write all line information into new df at this point
+                quote_data.loc[len(quote_data)]={
+                    'Order Reference': 'S'+str(row.TKT_NO),
+                    'Customer*': row.CUST_NO,
+                    'Order Date':row.TKT_DT,
+                    'Order Lines/Products*': row.ITEM_NO,
+                    'Order Lines/Quantity': row.QTY_SOLD,
+                    'Order Lines/Unit Price': row.PRC_1
+                }
+                indicator-=1
+        else:
+            quote_data.loc[len(quote_data)]={
+                'Order Reference': None,
+                'Customer*': None,
+                'Order Date':None,
+                'Order Lines/Products*': row.ITEM_NO,
+                'Order Lines/Quantity': row.QTY_SOLD,
+                'Order Lines/Unit Price': row.PRC_1
+            }
+            indicator-=1
+
+        print(indicator)
+
+
+    return quote_data
 
 if __name__=='__main__':
     main()
