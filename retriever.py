@@ -13,7 +13,8 @@ cursor=cnxn.cursor()
 
 def main():
 
-
+    quote_data=quote_import()
+    quote_data.to_excel("export\\quotes_data.xlsx", engine="xlsxwriter")
 
     return
 
@@ -41,7 +42,7 @@ def quote_import():
 
 
     df_tkt_data=pd.DataFrame(data,columns=col)
-    quote_data=pd.DataFrame(columns=['Order Reference','Customer','Order Date','Expiration','Products','Quantity','Unit Price'])
+    quote_data=pd.DataFrame(columns=['Order Reference','Customer','Expiration','Products','Quantity','Unit_Price'])
     
     quote_rows = []
     indicator = 0
@@ -56,7 +57,8 @@ def quote_import():
                     'Date': row.TKT_DT,
                     'Products': row.ITEM_NO,
                     'Quantity': row.QTY_SOLD,
-                    'Unit Price': row.PRC_1
+                    'Unit_Price': row.PRC_1,
+                    'Order_Lines': row.LINS
                 })
                 indicator -= 1
         else:
@@ -66,7 +68,8 @@ def quote_import():
                         'Order Date': None,
                         'Products': row.ITEM_NO,
                         'Quantity': row.QTY_SOLD,
-                        'Unit Price': row.PRC_1
+                        'Unit_Price': row.PRC_1,
+                        'Order_Lines': None
                         })
             indicator -= 1
 
