@@ -15,7 +15,6 @@ def main():
     
         
     uid= authentication()
-    print(uid)
     data=quote_import()#ticket information
     items=get_item_ids(data,uid)#dictionary of items on tickets
     customers=get_cust_ids(data,uid)#dictionary of customers on tickets
@@ -23,7 +22,7 @@ def main():
     
 
 
-def authentication():
+def authentication():#
 
     uid= common.authenticate(db, username, password, {})
 
@@ -35,7 +34,7 @@ def authentication():
     return uid
 
 
-def post_tickets(items,customers,tickets,uid):
+def post_tickets(items,customers,tickets,uid):#sends tickets to odoo via api
     indicator = 0
     orders_to_create = []
 
